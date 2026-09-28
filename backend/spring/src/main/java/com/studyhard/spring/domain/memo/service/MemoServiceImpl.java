@@ -13,7 +13,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor
@@ -25,11 +24,11 @@ public class MemoServiceImpl implements MemoService {
 
     @Override
     @Transactional
-    public MemoResponse createMemo(MemoCreateRequest request, List<MultipartFile> images) {
+    public MemoResponse createMemo(MemoCreateRequest request) {
         User user = userRepository.findById(request.userId())
             .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "존재하지 않는 유저입니다."));
 
-        List<String> imageUrls = s3Uploader.upload(images);
+        List<String> imageUrls = s3Uploader.upload(request.images());
 
         Memo memo = Memo.builder()
             .user(user)

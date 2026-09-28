@@ -25,7 +25,10 @@ public class S3Uploader {
         if (files == null || files.isEmpty()) {
             return List.of();
         }
-        return files.stream().map(this::uploadOne).toList();
+        return files.stream()
+            .filter(file -> !file.isEmpty())
+            .map(this::uploadOne)
+            .toList();
     }
 
     private String uploadOne(MultipartFile file) {
