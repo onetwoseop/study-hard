@@ -9,9 +9,6 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.multipart.MultipartFile;
 
 public record MemoCreateRequest(
-    @NotNull(message = "userId는 필수입니다.")
-    Long userId,
-
     @NotBlank(message = "제목은 필수입니다.")
     String title,
 

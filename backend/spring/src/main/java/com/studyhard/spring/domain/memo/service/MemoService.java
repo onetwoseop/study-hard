@@ -6,9 +6,9 @@ import java.util.List;
 
 public interface MemoService {
 
-    MemoResponse createMemo(MemoCreateRequest request);
+    MemoResponse createMemo(Long userId, MemoCreateRequest request);
 
     List<MemoResponse> getMemos(Long userId);
 
-    MemoResponse getMemo(Long memoId);
+    MemoResponse getMemo(Long userId, Long memoId);
 }
