@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 @Component
@@ -21,15 +22,23 @@ public class S3Uploader {
     @Value("${spring.cloud.aws.s3.bucket}")
     private String bucket;
 
-    public List<String> upload(List<MultipartFile> files) {
+    /**
+     * Uploads each non-empty file under {@code dir/} and returns the public URLs in order.
+     */
+    public List<String> upload(List<MultipartFile> files, String dir) {
         if (files == null || files.isEmpty()) {
             return List.of();
         }
-        return files.stream().map(this::uploadOne).toList();
+        return files.stream()
+            .filter(file -> !file.isEmpty())
+            .map(file -> uploadOne(file, dir))
+            .toList();
     }
 
-    private String uploadOne(MultipartFile file) {
-        String key = UUID.randomUUID() + "-" + file.getOriginalFilename();
+    private String uploadOne(MultipartFile file, String dir) {
+        // The original filename is left out of the key: Korean or spaces in it break the returned URL.
+        String extension = StringUtils.getFilenameExtension(file.getOriginalFilename());
+        String key = dir + "/" + UUID.randomUUID() + (extension == null ? "" : "." + extension.toLowerCase());
         ObjectMetadata metadata = ObjectMetadata.builder()
             .contentType(file.getContentType())
             .contentLength(file.getSize())

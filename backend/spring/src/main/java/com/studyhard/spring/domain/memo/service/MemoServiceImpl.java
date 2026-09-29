@@ -13,7 +13,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor
@@ -25,11 +24,11 @@ public class MemoServiceImpl implements MemoService {
 
     @Override
     @Transactional
-    public MemoResponse createMemo(MemoCreateRequest request, List<MultipartFile> images) {
-        User user = userRepository.findById(request.userId())
+    public MemoResponse createMemo(Long userId, MemoCreateRequest request) {
+        User user = userRepository.findById(userId)
             .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "존재하지 않는 유저입니다."));
 
-        List<String> imageUrls = s3Uploader.upload(images);
+        List<String> imageUrls = s3Uploader.upload(request.images(), "memo");
 
         Memo memo = Memo.builder()
             .user(user)
@@ -55,9 +54,13 @@ public class MemoServiceImpl implements MemoService {
 
     @Override
     @Transactional(readOnly = true)
-    public MemoResponse getMemo(Long memoId) {
+    public MemoResponse getMemo(Long userId, Long memoId) {
         Memo memo = memoRepository.findById(memoId)
             .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "존재하지 않는 메모입니다."));
+        // Friendship does not exist yet, so FRIENDS memos are owner-only as well.
+        if (!memo.getUser().getUserId().equals(userId)) {
+            throw new BusinessException(HttpStatus.FORBIDDEN, "본인의 메모만 조회할 수 있습니다.");
+        }
         return MemoResponse.from(memo);
     }
 }
